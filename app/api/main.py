@@ -1,13 +1,18 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+import traceback
 
 from app.services.rag_services import RAGService
 
 app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5174",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -16,13 +21,9 @@ app.add_middleware(
 rag = RAGService()
 
 
-class Question(BaseModel):
+class ChatRequest(BaseModel):
     session_id: str
     question: str
-
-
-from fastapi import HTTPException
-import traceback
 
 
 @app.post("/chat")
@@ -34,8 +35,13 @@ def chat(request: ChatRequest):
             request.question
         )
 
-        return {"answer": answer}
+        return {
+            "answer": answer
+        }
 
     except Exception as e:
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
