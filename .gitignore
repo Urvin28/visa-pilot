@@ -25,7 +25,4 @@ Thumbs.db
 *.pt
 *.pth
 
-vector_store/*
-
-*.npy
 
