@@ -1,42 +1,48 @@
 import json
-import numpy as np
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
 
-from app.config import VECTOR_STORE, EMBEDDING_MODEL
+from openai import OpenAI
+
+from app.config import VECTOR_STORE
+
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class Retriever:
 
     def __init__(self):
 
-        self.model = SentenceTransformer(EMBEDDING_MODEL)
-
-        self.embeddings = np.load(VECTOR_STORE / "embeddings.npy")
+        self.client = OpenAI(
+            api_key=os.getenv("OPENAI_API_KEY")
+        )
 
         with open(VECTOR_STORE / "chunks.json", "r", encoding="utf-8") as f:
             self.chunks = json.load(f)
 
+        with open(VECTOR_STORE / "embeddings.json", "r") as f:
+            self.embeddings = json.load(f)
+
     def search(self, query, top_k=3):
 
-        query_embedding = self.model.encode([query])
+        response = self.client.embeddings.create(
+            model="text-embedding-3-small",
+            input=query
+        )
 
-        scores = cosine_similarity(query_embedding, self.embeddings)[0]
+        query_embedding = response.data[0].embedding
 
-        top_indices = np.argsort(scores)[::-1][:top_k]
+        scores = []
+
+        for embedding in self.embeddings:
+            score = sum(a * b for a, b in zip(query_embedding, embedding))
+            scores.append(score)
+
+        top_indices = sorted(
+            range(len(scores)),
+            key=lambda i: scores[i],
+            reverse=True
+        )[:top_k]
 
         return [self.chunks[i] for i in top_indices]
-    
-
-
-if __name__ == "__main__":
-
-    retriever = Retriever()
-
-    results = retriever.search(
-        "When does H-1B registration start?"
-    )
-
-    for result in results:
-        print(result)
-        print("-" * 80)

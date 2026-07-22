@@ -6,7 +6,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 model = SentenceTransformer("BAAI/bge-small-en-v1.5")
 
 # Load document
-project_folder = Path(__file__).parent.parent
+project_folder = Path(__file__).parent.parent.parent
 file_path = project_folder / "knowledge_base" / "uscis" / "h1b.md"
 
 text = file_path.read_text(encoding="utf-8")
@@ -29,7 +29,9 @@ import json
 import numpy as np
 
 # Save embeddings
-np.save(project_folder / "vector_store" / "embeddings.npy", embeddings)
+# Save embeddings
+with open(project_folder / "vector_store" / "embeddings.json", "w") as f:
+    json.dump(embeddings.tolist(), f)
 
 # Save chunks
 with open(project_folder / "vector_store" / "chunks.json", "w", encoding="utf-8") as f:
