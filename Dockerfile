@@ -2,7 +2,7 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y curl
+RUN apt-get update && apt-get install -y curl zstd
 
 # Install Ollama
 RUN curl -fsSL https://ollama.com/install.sh | sh
