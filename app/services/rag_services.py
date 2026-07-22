@@ -1,4 +1,5 @@
 from app.retrieval.retriever import Retriever
+from app.retrieval.query_router import QueryRouter
 from app.llm.client import LLMClient
 from app.llm.prompts import PromptBuilder
 from app.llm.extractor import UserInfoExtractor
@@ -14,6 +15,7 @@ class RAGService:
 
         self.retriever = Retriever()
         self.llm = LLMClient()
+        self.router = QueryRouter()
 
     def ask(self, session_id, question):
 
@@ -21,6 +23,43 @@ class RAGService:
         # Load/Create Session
         # -------------------------
         session = self.session_manager.get(session_id)
+
+        # -------------------------
+        # Route Query
+        # -------------------------
+        route = self.router.route(question)
+
+        if route == "small_talk":
+
+            prompt = f"""
+Conversation:
+
+{session.history}
+
+User:
+{question}
+
+Reply naturally in one short sentence.
+"""
+
+            answer = self.llm.generate(
+                system_prompt="You are a friendly U.S. immigration assistant.",
+                user_prompt=prompt,
+            )
+
+            session.history.append({
+                "role": "user",
+                "content": question
+            })
+
+            session.history.append({
+                "role": "assistant",
+                "content": answer
+            })
+
+            session.history = session.history[-10:]
+
+            return answer
 
         # -------------------------
         # Extract user information

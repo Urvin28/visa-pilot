@@ -1,16 +1,25 @@
-from ollama import chat
-from app.config import MODEL_NAME
+import os
+
+from groq import Groq
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class LLMClient:
 
     def __init__(self):
-        self.model = MODEL_NAME
+
+        self.client = Groq(
+            api_key=os.getenv("GROQ_API_KEY")
+        )
 
     def generate(self, system_prompt, user_prompt):
 
-        response = chat(
-            model=self.model,
+        response = self.client.chat.completions.create(
+
+            model="llama-3.3-70b-versatile",
+
             messages=[
                 {
                     "role": "system",
@@ -20,20 +29,9 @@ class LLMClient:
                     "role": "user",
                     "content": user_prompt
                 }
-            ]
+            ],
+
+            temperature=0.2,
         )
 
-        return response["message"]["content"]
-    
-
-if __name__ == "__main__":
-
-    llm = LLMClient()
-
-    answer = llm.generate(
-        "You are a helpful assistant.",
-        "Say hello in one sentence."
-    )
-
-    print(answer)
-    
+        return response.choices[0].message.content

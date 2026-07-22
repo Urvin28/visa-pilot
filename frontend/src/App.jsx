@@ -12,7 +12,7 @@ function App() {
     chatEndRef.current?.scrollIntoView({
       behavior: "smooth",
     });
-  }, [messages]);
+    }, [messages]);   
 
   const askQuestion = async () => {
     if (loading || !question.trim()) return;
@@ -170,4 +170,7 @@ function App() {
     </div>
 
   </div>
-);
+  );
+}
+
+export default App;
