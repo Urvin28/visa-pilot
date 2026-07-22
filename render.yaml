@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: visa-pilot-api
+    env: docker
+    plan: starter
+    autoDeploy: true
