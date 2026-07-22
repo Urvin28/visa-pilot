@@ -1,11 +1,11 @@
 import json
+import os
 
+import numpy as np
+from dotenv import load_dotenv
 from openai import OpenAI
 
 from app.config import VECTOR_STORE
-
-import os
-from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -22,7 +22,7 @@ class Retriever:
             self.chunks = json.load(f)
 
         with open(VECTOR_STORE / "embeddings.json", "r") as f:
-            self.embeddings = json.load(f)
+            self.embeddings = np.array(json.load(f))
 
     def search(self, query, top_k=3):
 
@@ -31,18 +31,15 @@ class Retriever:
             input=query
         )
 
-        query_embedding = response.data[0].embedding
+        query_embedding = np.array(response.data[0].embedding)
 
-        scores = []
+        scores = (
+            self.embeddings @ query_embedding
+        ) / (
+            np.linalg.norm(self.embeddings, axis=1)
+            * np.linalg.norm(query_embedding)
+        )
 
-        for embedding in self.embeddings:
-            score = sum(a * b for a, b in zip(query_embedding, embedding))
-            scores.append(score)
-
-        top_indices = sorted(
-            range(len(scores)),
-            key=lambda i: scores[i],
-            reverse=True
-        )[:top_k]
+        top_indices = np.argsort(scores)[::-1][:top_k]
 
         return [self.chunks[i] for i in top_indices]
