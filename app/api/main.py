@@ -21,14 +21,21 @@ class Question(BaseModel):
     question: str
 
 
+from fastapi import HTTPException
+import traceback
+
+
 @app.post("/chat")
-def chat(request: Question):
+def chat(request: ChatRequest):
 
-    answer = rag.ask(
-        session_id=request.session_id,
-        question=request.question
-    )
+    try:
+        answer = rag.ask(
+            request.session_id,
+            request.question
+        )
 
-    return {
-        "answer": answer
-    }
+        return {"answer": answer}
+
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
