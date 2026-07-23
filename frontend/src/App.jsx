@@ -39,7 +39,7 @@ function App() {
 
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/chat",
+        "https://visa-pilot.onrender.com/chat",
         {
           session_id: "user123",
           question: currentQuestion,

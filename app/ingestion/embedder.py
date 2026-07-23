@@ -1,40 +1,40 @@
+import json
+import os
 from pathlib import Path
-from sentence_transformers import SentenceTransformer
+
+from dotenv import load_dotenv
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from openai import OpenAI
 
-# Load model
-model = SentenceTransformer("BAAI/bge-small-en-v1.5")
+load_dotenv()
 
-# Load document
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 project_folder = Path(__file__).parent.parent.parent
 file_path = project_folder / "knowledge_base" / "uscis" / "h1b.md"
 
 text = file_path.read_text(encoding="utf-8")
 
-# Split into chunks
 splitter = RecursiveCharacterTextSplitter(
     chunk_size=1000,
-    chunk_overlap=200
+    chunk_overlap=200,
 )
 
 chunks = splitter.split_text(text)
 
-# Generate embeddings
-embeddings = model.encode(chunks)
+embeddings = []
 
-print(f"Chunks: {len(chunks)}")
-print(f"Embedding shape: {embeddings.shape}")
+for chunk in chunks:
+    response = client.embeddings.create(
+        model="text-embedding-3-small",
+        input=chunk
+    )
+    embeddings.append(response.data[0].embedding)
 
-import json
-import numpy as np
-
-# Save embeddings
-# Save embeddings
-with open(project_folder / "vector_store" / "embeddings.json", "w") as f:
-    json.dump(embeddings.tolist(), f)
-
-# Save chunks
 with open(project_folder / "vector_store" / "chunks.json", "w", encoding="utf-8") as f:
     json.dump(chunks, f, ensure_ascii=False, indent=2)
 
-print("Saved vector store!")
+with open(project_folder / "vector_store" / "embeddings.json", "w") as f:
+    json.dump(embeddings, f)
+
+print("Vector store created.")
