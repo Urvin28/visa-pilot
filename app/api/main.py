@@ -22,6 +22,16 @@ app.add_middleware(
 rag = RAGService()
 
 
+@app.get("/")
+def root():
+    return {
+        "service": "VisaPilot API",
+        "status": "ok",
+        "chat_endpoint": "/chat",
+        "api_docs": "/docs",
+    }
+
+
 class ChatRequest(BaseModel):
     session_id: str
     question: str
