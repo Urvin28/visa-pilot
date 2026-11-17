@@ -8,6 +8,8 @@ OPT is temporary employment authorization for practical training directly relate
 - **Post-completion OPT** takes place after completion of the program. Eligible students may generally receive up to 12 months at each higher educational level, reduced by applicable prior OPT and affected by full-time CPT of 12 months or more at that level.
 - Qualifying STEM degree holders may apply for a separate 24-month STEM OPT extension; see the STEM OPT guide.
 
+If you are finishing a second master's, eligibility depends on prior OPT and CPT use at the master's level. A second degree at the same educational level does not automatically reset the 12-month allowance. See [OPT after a second master's degree](second_masters_opt.md).
+
 ## Applying for post-completion OPT
 
 1. Ask the DSO to review eligibility and enter the OPT recommendation in SEVIS.
