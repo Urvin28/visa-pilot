@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from pathlib import Path
 from app.scraper.urls import pages
 
-project_folder = Path(__file__).parent.parent
+project_folder = Path(__file__).resolve().parents[2]
 
 headers = {
     "User-Agent": "Mozilla/5.0"

@@ -15,7 +15,7 @@ pages = {
         "folder": "uscis",
         "type": "html"
     },
-    "f1_rule_changes": {
+    "f1_fixed_period_admission_source": {
         "url": "https://www.federalregister.gov/api/v1/documents/2026-14439.json",
         "folder": "updates",
         "type": "federal_register"

@@ -1,6 +1,5 @@
 fastapi
 uvicorn
-groq
 openai
 python-dotenv
 numpy

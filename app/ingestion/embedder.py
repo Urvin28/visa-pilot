@@ -1,3 +1,8 @@
+"""Build the JSON vector store from every Markdown file in knowledge_base.
+
+Run from the project root with: python -m app.ingestion.embedder
+"""
+
 import json
 import os
 from pathlib import Path
@@ -8,33 +13,51 @@ from openai import OpenAI
 
 load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+KNOWLEDGE_BASE = PROJECT_ROOT / "knowledge_base"
+VECTOR_STORE = PROJECT_ROOT / "vector_store"
+EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
 
-project_folder = Path(__file__).parent.parent.parent
-file_path = project_folder / "knowledge_base" / "uscis" / "h1b.md"
 
-text = file_path.read_text(encoding="utf-8")
+def build_vector_store():
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY is required to build the vector store.")
 
-splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1000,
-    chunk_overlap=200,
-)
+    files = sorted(KNOWLEDGE_BASE.rglob("*.md"))
+    if not files:
+        raise RuntimeError(f"No Markdown source documents found under {KNOWLEDGE_BASE}")
 
-chunks = splitter.split_text(text)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    chunks = []
+    for file_path in files:
+        text = file_path.read_text(encoding="utf-8").strip()
+        if text:
+            chunks.extend(splitter.split_text(text))
 
-embeddings = []
+    if not chunks:
+        raise RuntimeError("The Markdown files contained no text to index.")
 
-for chunk in chunks:
-    response = client.embeddings.create(
-        model="text-embedding-3-small",
-        input=chunk
+    client = OpenAI(api_key=api_key)
+    embeddings = []
+    # Batch requests reduce latency and avoid one API call per chunk.
+    for start in range(0, len(chunks), 100):
+        batch = chunks[start : start + 100]
+        result = client.embeddings.create(model=EMBEDDING_MODEL, input=batch)
+        embeddings.extend(item.embedding for item in result.data)
+
+    if len(chunks) != len(embeddings):
+        raise RuntimeError("Embedding count did not match the chunk count.")
+
+    VECTOR_STORE.mkdir(parents=True, exist_ok=True)
+    (VECTOR_STORE / "chunks.json").write_text(
+        json.dumps(chunks, ensure_ascii=False, indent=2), encoding="utf-8"
     )
-    embeddings.append(response.data[0].embedding)
+    (VECTOR_STORE / "embeddings.json").write_text(
+        json.dumps(embeddings), encoding="utf-8"
+    )
+    print(f"Indexed {len(chunks)} chunks from {len(files)} Markdown documents.")
 
-with open(project_folder / "vector_store" / "chunks.json", "w", encoding="utf-8") as f:
-    json.dump(chunks, f, ensure_ascii=False, indent=2)
 
-with open(project_folder / "vector_store" / "embeddings.json", "w") as f:
-    json.dump(embeddings, f)
-
-print("Vector store created.")
+if __name__ == "__main__":
+    build_vector_store()
